@@ -229,7 +229,7 @@ Recommended future upgrade:
 ## Canonical source
 
 This project is maintained by Aleksei Ulianov / Sprut_AI.
-Canonical repository: https://github.com/AlekseiUL/sprut-meetingbot-pipeline
+Original repository: https://github.com/AlekseiUL/sprut-meetingbot-pipeline
 
 If you found this project mirrored, repackaged, or redistributed elsewhere, check this repository as the source of truth.
 
