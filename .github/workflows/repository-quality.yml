@@ -1,0 +1,101 @@
+name: repository-quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Shell syntax
+        run: |
+          set -euo pipefail
+          while IFS= read -r f; do
+            bash -n "$f"
+          done < <(find . -type f -name '*.sh' -not -path './backend/node_modules/*')
+
+      - name: Python syntax via ast.parse
+        run: |
+          python - <<'PY'
+          import ast, pathlib, sys
+          bad=[]
+          for p in pathlib.Path('.').rglob('*.py'):
+              if any(part in {'node_modules', '__pycache__', 'runtime'} for part in p.parts):
+                  continue
+              try:
+                  ast.parse(p.read_text(encoding='utf-8'))
+              except Exception as exc:
+                  bad.append((str(p), exc))
+          for path, exc in bad:
+              print(path, exc)
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: JSON validation
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+          bad=[]
+          for p in pathlib.Path('.').rglob('*.json'):
+              if any(part in {'node_modules', 'runtime'} for part in p.parts):
+                  continue
+              try:
+                  json.loads(p.read_text(encoding='utf-8'))
+              except Exception as exc:
+                  bad.append((str(p), exc))
+          for path, exc in bad:
+              print(path, exc)
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: Backend build
+        working-directory: backend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Private path / secret placeholder scan
+        run: |
+          python - <<'PY'
+          import pathlib, re, sys
+          patterns = {
+              'private_path': re.compile(r'/Users/(?!your-user|local-user)[^/\s]+|MIKE_CENTER|\.hermes/profiles'),
+              'secret_assignment': re.compile(r'(?i)^\s*(?:export\s+)?(HF_TOKEN|TELEGRAM.*TOKEN|GOOGLE.*COOKIE|AUTH_JSON|PASSWORD)\s*=\s*(?!$|your_|hf_your|\[REDACTED\]|\.\.\.)\S+'),
+              'runtime_artifact': re.compile(r'(__pycache__|\.pyc$|debug-videos/participants|recording\.webm|\.wav$)'),
+          }
+          skip_ext={'.png','.jpg','.jpeg','.webm','.wav','.mp4','.mkv','.pyc'}
+          bad=[]
+          for p in pathlib.Path('.').rglob('*'):
+              if not p.is_file():
+                  continue
+              if any(part in {'node_modules', '.git'} for part in p.parts):
+                  continue
+              if p.suffix.lower() in skip_ext:
+                  bad.append(('binary/runtime artifact', str(p), 0, ''))
+                  continue
+              text=p.read_text(encoding='utf-8', errors='ignore')
+              for i,line in enumerate(text.splitlines(),1):
+                  for kind,rx in patterns.items():
+                      if rx.search(line):
+                          # allow documented ignore patterns in .gitignore and the scanner itself
+                          if p.name == '.gitignore' or str(p) == '.github/workflows/repository-quality.yml':
+                              continue
+                          bad.append((kind, str(p), i, line[:160]))
+          for item in bad[:80]:
+              print(' | '.join(map(str,item)))
+          print('findings:', len(bad))
+          sys.exit(1 if bad else 0)
+          PY

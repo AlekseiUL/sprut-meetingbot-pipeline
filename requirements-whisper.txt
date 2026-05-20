@@ -1,0 +1,6 @@
+# Python dependencies for the local ASR/diarization environment.
+# Recommended: install into ~/.sprut-meetingbot/whisper-env on Apple Silicon/macOS.
+mlx-whisper
+pyannote.audio
+huggingface_hub
+torch

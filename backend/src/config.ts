@@ -1,0 +1,113 @@
+import dotenv from 'dotenv';
+import { UploaderType } from './types';
+dotenv.config();
+
+const ENVIRONMENTS = [
+  'production',
+  'staging',
+  'development',
+  'cli',
+  'test',
+] as const;
+
+export type Environment = (typeof ENVIRONMENTS)[number];
+export const NODE_ENV: Environment = ENVIRONMENTS.includes(
+  process.env.NODE_ENV as Environment
+)
+  ? (process.env.NODE_ENV as Environment)
+  : 'staging';
+
+console.log('NODE_ENV', process.env.NODE_ENV);
+
+const requiredSettings = process.env.UPLOADER_TYPE === 'local'
+  ? []
+  : [
+    'GCP_DEFAULT_REGION',
+    'GCP_MISC_BUCKET',
+  ];
+const missingSettings = requiredSettings.filter((s) => !process.env[s]);
+if (missingSettings.length > 0) {
+  missingSettings.forEach((ms) =>
+    console.error(`ENV settings ${ms} is missing.`)
+  );
+}
+
+const constructRedisUri = () => {
+  const host = process.env.REDIS_HOST || 'redis';
+  const port = process.env.REDIS_PORT || 6379;
+  const username = process.env.REDIS_USERNAME;
+  const password = process.env.REDIS_PASSWORD;
+
+  if (username && password) {
+    return `redis://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${host}:${port}`;
+  } else if (password) {
+    return `redis://:${encodeURIComponent(password)}@${host}:${port}`;
+  } else {
+    return `redis://${host}:${port}`;
+  }
+};
+
+export default {
+  port: process.env.PORT || 3000,
+  db: {
+    host: process.env.DB_HOST || 'localhost',
+    user: process,
+  },
+  authBaseUrlV2: process.env.AUTH_BASE_URL_V2 ?? 'http://localhost:8081/v2',
+  // Unset MAX_RECORDING_DURATION_MINUTES to use default upper limit on duration
+  maxRecordingDuration: process.env.MAX_RECORDING_DURATION_MINUTES ?
+    Number(process.env.MAX_RECORDING_DURATION_MINUTES) :
+    180, // There's an upper limit on meeting duration 3 hours
+  chromeExecutablePath: process.env.CHROME_PATH || '/usr/bin/google-chrome', // We use Google Chrome with Playwright for recording
+  inactivityLimit: process.env.MEETING_INACTIVITY_MINUTES ? Number(process.env.MEETING_INACTIVITY_MINUTES) : 1,
+  activateInactivityDetectionAfter: process.env.INACTIVITY_DETECTION_START_DELAY_MINUTES ? Number(process.env.INACTIVITY_DETECTION_START_DELAY_MINUTES) :  1,
+  meetingSilenceThreshold: process.env.MEETING_SILENCE_THRESHOLD ? Number(process.env.MEETING_SILENCE_THRESHOLD) : 1,
+  participantInactivityEnabled: process.env.MEETING_PARTICIPANT_INACTIVITY_ENABLED === 'true',
+  serviceKey: process.env.SCREENAPP_BACKEND_SERVICE_API_KEY,
+  joinWaitTime: process.env.JOIN_WAIT_TIME_MINUTES ? Number(process.env.JOIN_WAIT_TIME_MINUTES) : 10,
+  // Number of retries for transient errors (not applied to WaitingAtLobbyRetryError)
+  retryCount: process.env.RETRY_COUNT ? Number(process.env.RETRY_COUNT) : 2,
+  miscStorageBucket: process.env.GCP_MISC_BUCKET,
+  miscStorageFolder: process.env.GCP_MISC_BUCKET_FOLDER ? process.env.GCP_MISC_BUCKET_FOLDER : 'meeting-bot',
+  region: process.env.GCP_DEFAULT_REGION,
+  accessKey: process.env.GCP_ACCESS_KEY_ID ?? '',
+  accessSecret: process.env.GCP_SECRET_ACCESS_KEY ?? '',
+  redisQueueName: process.env.REDIS_QUEUE_NAME ?? 'jobs:meetbot:list',
+  redisUri: constructRedisUri(),
+  // Notification: Webhook (disabled by default)
+  notifyWebhookEnabled: process.env.NOTIFY_WEBHOOK_ENABLED === 'true',
+  notifyWebhookUrl: process.env.NOTIFY_WEBHOOK_URL,
+  // Optional secret to sign payloads (HMAC-SHA256). If set, signature will be sent in X-Webhook-Signature header
+  notifyWebhookSecret: process.env.NOTIFY_WEBHOOK_SECRET,
+  // Notification: Redis (disabled by default). Uses same REDIS connection but selectable DB and list
+  notifyRedisEnabled: process.env.NOTIFY_REDIS_ENABLED === 'true',
+  // If not provided, uses redisUri with specified database selection
+  notifyRedisUri: process.env.NOTIFY_REDIS_URI, // optional override
+  notifyRedisDb: process.env.NOTIFY_REDIS_DB ? Number(process.env.NOTIFY_REDIS_DB) : 1, // must not default to 0
+  notifyRedisList: process.env.NOTIFY_REDIS_LIST ?? 'jobs:meetbot:recordings',
+  uploaderFileExtension: process.env.UPLOADER_FILE_EXTENSION ? process.env.UPLOADER_FILE_EXTENSION : '.webm',
+  isRedisEnabled: process.env.REDIS_CONSUMER_ENABLED === 'true',
+  s3CompatibleStorage: {
+    endpoint: process.env.S3_ENDPOINT,
+    region: process.env.S3_REGION,
+    accessKeyId: process.env.S3_ACCESS_KEY_ID,
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+    bucket: process.env.S3_BUCKET_NAME,
+    forcePathStyle: process.env.S3_USE_MINIO_COMPATIBILITY === 'true',
+  },
+  // Object storage provider selection: 's3' (default) or 'azure'
+  storageProvider: (process.env.STORAGE_PROVIDER === 'azure' ? 'azure' : 's3') as 's3' | 'azure',
+  azureBlobStorage: {
+    // Either provide full connection string OR account + key/SAS OR managed identity
+    connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING,
+    accountName: process.env.AZURE_STORAGE_ACCOUNT,
+    accountKey: process.env.AZURE_STORAGE_ACCOUNT_KEY, // optional when using connection string
+    sasToken: process.env.AZURE_STORAGE_SAS_TOKEN, // starts with ?sv=...
+    useManagedIdentity: process.env.AZURE_USE_MANAGED_IDENTITY === 'true',
+    container: process.env.AZURE_STORAGE_CONTAINER,
+    blobPrefix: process.env.AZURE_BLOB_PREFIX || '',
+    signedUrlTtlSeconds: process.env.AZURE_SIGNED_URL_TTL_SECONDS ? Number(process.env.AZURE_SIGNED_URL_TTL_SECONDS) : 3600,
+    uploadConcurrency: process.env.AZURE_UPLOAD_CONCURRENCY ? Number(process.env.AZURE_UPLOAD_CONCURRENCY) : 4,
+  },
+  uploaderType: process.env.UPLOADER_TYPE ? (process.env.UPLOADER_TYPE as UploaderType) : 's3' as UploaderType,
+};

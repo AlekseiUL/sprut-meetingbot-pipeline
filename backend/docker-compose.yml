@@ -1,0 +1,26 @@
+services:
+  meeting-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.development
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - UPLOADER_TYPE=local
+      - UPLOADER_FILE_EXTENSION=.webm
+      - REDIS_CONSUMER_ENABLED=false
+      - NOTIFY_WEBHOOK_ENABLED=false
+      - NOTIFY_REDIS_ENABLED=false
+      - MEETING_PARTICIPANT_INACTIVITY_ENABLED=false
+    ports:
+      - "3001:3001"
+    volumes:
+      - .:/usr/src/app
+      - ./assets/screenshots:/usr/src/app/assets/screenshots
+      - ./debug-videos:/usr/src/app/debug-videos
+      - /usr/src/app/node_modules  # Persist node_modules
+    command: ["/bin/bash", "./start.sh"]
+
+
+volumes:
+  cache:

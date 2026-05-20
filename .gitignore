@@ -1,0 +1,44 @@
+# Secrets and local credentials
+.env
+.env.*
+!.env.example
+!.env.local.example
+config/meetingbot.env
+config/*.env
+auth.json
+auth.*.json
+*.token
+*.secret
+
+# Runtime artifacts
+runtime/
+jobs/
+meetings/
+debug-videos/
+backend/debug-videos/
+backend/dist/_tempvideo/
+backend/assets/screenshots/
+*.webm
+*.wav
+*.mp4
+*.mkv
+*.ogg
+
+# Dependencies/build
+node_modules/
+backend/node_modules/
+dist/
+backend/dist/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
+logs/

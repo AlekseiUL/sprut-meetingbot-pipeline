@@ -1,0 +1,74 @@
+FROM node:20
+
+WORKDIR /usr/src/app
+
+# Install system dependencies, including WebGL support and audio
+RUN apt-get update && \
+  apt-get install -y \
+  ffmpeg \
+  libnss3 \
+  libxss1 \
+  libasound2 \
+  pulseaudio \
+  alsa-utils \
+  libatk1.0-0 \
+  libatk-bridge2.0-0 \
+  libcups2 \
+  libxkbcommon-x11-0 \
+  libgbm-dev \
+  libgl1-mesa-dri \
+  libgl1-mesa-glx \
+  mesa-utils \
+  xvfb \
+  wget \
+  gnupg \
+  xorg \
+  xserver-xorg \
+  libx11-dev \
+  libxext-dev \
+  # ARM-specific packages (only for ARM64)
+  $(if [ "$(dpkg --print-architecture)" = "arm64" ]; then echo "libgles2 libegl1 libwayland-egl1"; fi) \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install browser. Google Chrome Linux packages are only reliable on amd64;
+# Apple Silicon Docker builds use Debian Chromium and expose it as google-chrome
+# because the app config expects that executable path.
+RUN ARCH=$(dpkg --print-architecture) && \
+  if [ "$ARCH" = "amd64" ]; then \
+    wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-linux-signing-key.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-signing-key.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list && \
+    apt-get update && apt-get install -y google-chrome-stable; \
+  else \
+    apt-get update && apt-get install -y chromium && ln -sf /usr/bin/chromium /usr/bin/google-chrome; \
+  fi && \
+  rm -rf /var/lib/apt/lists/*
+
+# Create symlink for Playwright compatibility (ARM64 only)
+RUN if [ "$(dpkg --print-architecture)" = "arm64" ]; then ln -sf /usr/bin/chromium /usr/bin/google-chrome; fi
+
+# Copy Chrome policy to allow protocol launching
+RUN mkdir -p /etc/opt/chrome/policies/managed
+COPY auto_launch_protocols.json /etc/opt/chrome/policies/managed/auto_launch_protocols.json
+
+# Install global tools
+RUN npm install -g nodemon
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Install Playwright and its dependencies
+RUN npx playwright install --with-deps
+
+# Copy application code
+COPY . .
+
+# Build app
+RUN npm run build
+
+# Set permissions
+RUN chmod +x /usr/src/app/start.sh
+
+EXPOSE 3001
+
+CMD ["node", "dist/index.js"]

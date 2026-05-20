@@ -1,0 +1,113 @@
+# Use the official Node.js image as a base image
+FROM node:20
+
+# Set the working directory
+WORKDIR /usr/src/app
+
+# Install system dependencies, including WebGL support and audio
+RUN apt-get update && \
+  apt-get install -y \
+  ffmpeg \
+  libnss3 \
+  libxss1 \
+  libasound2 \
+  pulseaudio \
+  alsa-utils \
+  libatk1.0-0 \
+  libatk-bridge2.0-0 \
+  libcups2 \
+  libxkbcommon-x11-0 \
+  libgbm-dev \
+  libgl1-mesa-dri \
+  libgl1-mesa-glx \
+  mesa-utils \
+  xvfb \
+  wget \
+  gnupg \
+  xorg \
+  xserver-xorg \
+  libx11-dev \
+  libxext-dev \
+  dos2unix \
+  # ARM-specific packages (only for ARM64)
+  $(if [ "$(dpkg --print-architecture)" = "arm64" ]; then echo "libgles2 libegl1 libwayland-egl1"; fi) \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install Google Chrome
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-linux-signing-key.gpg && \
+  ARCH=$(dpkg --print-architecture) && \
+  if [ "$ARCH" = "amd64" ]; then \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-signing-key.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list; \
+  elif [ "$ARCH" = "arm64" ]; then \
+    echo "deb [arch=arm64 signed-by=/usr/share/keyrings/google-linux-signing-key.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list; \
+  else \
+    echo "deb [signed-by=/usr/share/keyrings/google-linux-signing-key.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list; \
+  fi && \
+  apt-get update && apt-get install -y google-chrome-stable || apt-get install -y chromium && \
+  rm -rf /var/lib/apt/lists/*
+
+# Create symlink for Playwright compatibility (ARM64 only)
+RUN if [ "$(dpkg --print-architecture)" = "arm64" ]; then ln -sf /usr/bin/chromium /usr/bin/google-chrome; fi
+
+# Create non-root user with a home directory
+RUN groupadd -g 1001 nodejs && \
+    useradd -m -d /home/nodejs -r -u 1001 -g nodejs nodejs
+
+# Copy Chrome policy to allow protocol launching
+RUN mkdir -p /etc/opt/chrome/policies/managed
+COPY --chown=nodejs:nodejs auto_launch_protocols.json /etc/opt/chrome/policies/managed/auto_launch_protocols.json
+    
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci && npm cache clean --force
+
+# Install Playwright and its dependencies
+RUN npx playwright install --with-deps
+
+# Copy source code
+COPY . .
+
+# Set environment variables
+ENV NODE_ENV=production
+
+# Set xvfb-run-wrapper permissions
+RUN dos2unix /usr/src/app/xvfb-run-wrapper && \
+    chmod +x /usr/src/app/xvfb-run-wrapper
+
+# Build the TypeScript code
+RUN npm run build
+
+USER root
+RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+
+RUN mkdir -p /usr/src/app/dist/_tempvideo \
+    && chmod -R 777 /usr/src/app/dist/_tempvideo
+
+# Create PulseAudio directories for non-root user
+RUN mkdir -p /run/user/1001 \
+    && chown -R nodejs:nodejs /run/user/1001 \
+    && chmod 700 /run/user/1001
+
+# Create PulseAudio config directory
+RUN mkdir -p /home/nodejs/.config/pulse \
+    && chown -R nodejs:nodejs /home/nodejs/.config
+
+# Switch to non-root user
+USER nodejs
+
+# Install Playwright and its dependencies
+RUN npx playwright install
+
+# Expose the port your app runs on
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
+
+# Set the entry point
+ENTRYPOINT ["/usr/src/app/xvfb-run-wrapper"]
+
+CMD ["node", "dist/index.js"] 
