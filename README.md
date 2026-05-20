@@ -8,6 +8,8 @@ This project is for a local always-on machine, such as a Mac mini, where you con
 
 It is not a hosted SaaS product and it does not bypass Google Meet access controls.
 
+![SPRUT MeetingBot Pipeline hero diagram: send a Google Meet link from any device, record locally on a Mac mini, transcribe with Whisper and diarization, then receive Markdown notes.](docs/assets/sprut-meetingbot-pipeline-hero.jpg)
+
 ## What it does
 
 - Accepts a Google Meet link from a local command, SSH command, or your own automation trigger.

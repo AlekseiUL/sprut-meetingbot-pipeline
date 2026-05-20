@@ -84,7 +84,9 @@ jobs:
               if any(part in {'node_modules', '.git'} for part in p.parts):
                   continue
               if p.suffix.lower() in skip_ext:
-                  bad.append(('binary/runtime artifact', str(p), 0, ''))
+                  if str(p).startswith('docs/assets/'):
+                      continue
+                  bad.append(('binary/runtime artifact', str(p), 0))
                   continue
               text=p.read_text(encoding='utf-8', errors='ignore')
               for i,line in enumerate(text.splitlines(),1):
