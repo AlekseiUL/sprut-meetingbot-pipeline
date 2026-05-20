@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -84,9 +85,13 @@ def _start_backend(job_dir: Path, backend_url: str) -> dict:
     log_path = job_dir / "backend-start.log"
     env = os.environ.copy()
     env["COMPOSE_PROJECT_NAME"] = os.environ.get("MEETINGBOT_COMPOSE_PROJECT", "meetingbot")
+    compose_cmd = ["docker", "compose"]
+    if shutil.which("docker-compose"):
+        compose_cmd = ["docker-compose"]
+
     with log_path.open("ab", buffering=0) as log_fh:
         proc = subprocess.Popen(
-            ["docker", "compose", "up", "-d", "--build"],
+            [*compose_cmd, "up", "-d", "--build"],
             cwd=str(BACKEND_REPO),
             stdin=subprocess.DEVNULL,
             stdout=log_fh,

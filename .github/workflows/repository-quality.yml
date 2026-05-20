@@ -8,15 +8,15 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -90,10 +90,10 @@ jobs:
               for i,line in enumerate(text.splitlines(),1):
                   for kind,rx in patterns.items():
                       if rx.search(line):
-                          # allow documented ignore patterns in .gitignore and the scanner itself
-                          if p.name == '.gitignore' or str(p) == '.github/workflows/repository-quality.yml':
+                          # allow documented ignore patterns in .gitignore/.dockerignore and the scanner itself
+                          if p.name in {'.gitignore', '.dockerignore'} or str(p) == '.github/workflows/repository-quality.yml':
                               continue
-                          bad.append((kind, str(p), i, line[:160]))
+                          bad.append((kind, str(p), i))
           for item in bad[:80]:
               print(' | '.join(map(str,item)))
           print('findings:', len(bad))

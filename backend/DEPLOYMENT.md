@@ -6,7 +6,10 @@ Use:
 
 ```bash
 cd backend
+# Docker Compose v2:
 docker compose up -d --build
+# If your machine has the standalone binary instead:
+# docker-compose up -d --build
 ```
 
 The default local backend listens on:

@@ -15,7 +15,10 @@ For public setup instructions, use the repository root:
 cd backend
 npm ci
 npm run build
+# Docker Compose v2:
 docker compose up -d --build
+# If your machine has the standalone binary instead:
+# docker-compose up -d --build
 curl -sS http://127.0.0.1:3001/health
 ```
 

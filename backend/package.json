@@ -6,8 +6,8 @@
   "license": "MIT",
   "scripts": {
     "start": "nodemon --legacy-watch --ignore debug-videos --ignore dist/_tempvideo --ignore assets/screenshots src/index.ts",
-    "dev": "docker compose up --build",
-    "stop": "docker compose down",
+    "dev": "sh -c 'if command -v docker-compose >/dev/null 2>&1; then docker-compose up --build; else docker compose up --build; fi'",
+    "stop": "sh -c 'if command -v docker-compose >/dev/null 2>&1; then docker-compose down; else docker compose down; fi'",
     "build": "tsc",
     "lint": "eslint \"*/**/*.{js,ts}\" --quiet --fix"
   },

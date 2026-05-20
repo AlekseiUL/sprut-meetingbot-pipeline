@@ -82,7 +82,10 @@ The dispatcher can auto-start Docker Compose, but for first run it is safer to b
 
 ```bash
 cd backend
+# Docker Compose v2:
 docker compose up -d --build
+# If your machine has the standalone binary instead:
+# docker-compose up -d --build
 curl -sS http://127.0.0.1:3001/health
 curl -sS http://127.0.0.1:3001/isbusy
 ```
