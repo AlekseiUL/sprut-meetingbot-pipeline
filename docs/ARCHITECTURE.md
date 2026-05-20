@@ -2,7 +2,7 @@
 
 ```mermaid
 flowchart LR
-    A[Meet URL] --> B[recording_start.sh]
+    A[Meet URL from laptop / phone / calendar] --> B[Mac mini dispatcher]
     B --> C[Backend health + isbusy]
     C --> D[POST /google/join]
     D --> E[Playwright Chromium joins Google Meet]
@@ -18,6 +18,16 @@ flowchart LR
     M --> N[Markdown protocol]
     N --> O[Local file or optional notifier]
 ```
+
+## Remote-dispatch architecture
+
+The meeting source and the recording machine are intentionally separated.
+
+- Meeting source: laptop, phone, calendar, client machine, or another user's computer.
+- Dispatch channel: SSH, Telegram bot, webhook, private agent, Home Assistant, or another local automation trigger.
+- Recording/processing host: always-on Mac mini or similar local server.
+
+This makes the Mac mini a local meeting-recorder appliance: send it a Meet link, and it handles join, recording, ASR, diarization, and Markdown generation.
 
 ## Important state distinction
 

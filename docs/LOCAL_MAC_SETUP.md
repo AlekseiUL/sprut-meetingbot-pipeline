@@ -2,6 +2,8 @@
 
 This project is intended for a local always-on machine, such as a Mac mini on Apple Silicon. The machine should be allowed to run Docker containers, browser automation, FFmpeg, and local ML models.
 
+The Mac mini can act as a recorder appliance: you can start or receive a Meet on any other device, send the link to this machine, and let this machine join, record, transcribe, diarize, and write the final Markdown.
+
 ## 1. Install system tools
 
 Install Homebrew if needed, then:

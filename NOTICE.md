@@ -16,13 +16,13 @@ This repository packages a local recording-first MeetingBot pipeline for Google 
 
 ## Upstream attribution
 
-The browser meeting backend is derived from the MIT-licensed ScreenApp meeting-bot project:
+The browser automation backend component includes code derived from the MIT-licensed ScreenApp meeting-bot project:
 
 - Upstream repository: https://github.com/screenappai/meeting-bot
 - Upstream copyright: Copyright (c) 2025 ScreenApp.io
 - License: MIT
 
-Sprut_AI modifications include local recording-first workflow hardening, Google Meet participant/tile label capture improvements, Docker/Xvfb startup fixes, local ASR/diarization monitor scripts, quality gates, and documentation for local Apple Silicon / Mac mini deployment.
+Sprut_AI modifications include local remote-dispatch workflow, recording-first pipeline hardening, Google Meet participant/tile label capture improvements, Docker/Xvfb startup fixes, local ASR/diarization monitor scripts, quality gates, and documentation for local Apple Silicon / Mac mini deployment.
 
 ## Attribution
 

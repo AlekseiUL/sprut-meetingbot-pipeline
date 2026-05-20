@@ -1,6 +1,8 @@
 # Sprut MeetingBot Pipeline
 
-Local, recording-first Google Meet automation for self-hosted meeting transcripts: browser join, local recording, FFmpeg cleanup, MLX Whisper transcription, pyannote diarization, and quality-gated Markdown output.
+Local, recording-first Google Meet automation for self-hosted meeting transcripts: remote Meet-link dispatch, browser join, local recording, FFmpeg cleanup, MLX Whisper transcription, pyannote diarization, and quality-gated Markdown output.
+
+The key idea: **send a Google Meet link from any device, and let your always-on home machine record and process it.** Start the meeting on a work laptop, phone, or another computer; the recording can still happen on your Mac mini at home.
 
 This project is for a local always-on machine, such as a Mac mini, where you control Docker, browser automation, FFmpeg, and local ML dependencies.
 
@@ -8,9 +10,10 @@ It is not a hosted SaaS product and it does not bypass Google Meet access contro
 
 ## What it does
 
-- Starts a local MeetingBot job from a Google Meet URL.
+- Accepts a Google Meet link from a local command, SSH command, or your own automation trigger.
+- Starts a MeetingBot job on the always-on host, not necessarily on the computer where the meeting was started.
 - Opens Google Meet in a Dockerized Playwright/Chromium backend.
-- Records the meeting locally.
+- Records the meeting locally on the host machine.
 - Converts WebM to WAV with FFmpeg.
 - Cleans audio and trims long terminal silence before ASR.
 - Transcribes speech with local MLX Whisper.
@@ -23,6 +26,7 @@ It is not a hosted SaaS product and it does not bypass Google Meet access contro
 Use this if you want:
 
 - local-first meeting recording and transcription;
+- a home-server / Mac mini bot that can be dispatched from any other device by sending a Meet link;
 - control over where recordings/transcripts are stored;
 - a hackable pipeline for Google Meet automation;
 - Apple Silicon / Mac mini deployment;
@@ -39,10 +43,10 @@ Do not use it if:
 
 ```mermaid
 flowchart LR
-    A[Meet URL] --> B[Start script]
-    B --> C[Docker backend]
+    A[Meet URL from any device] --> B[Mac mini start script / webhook]
+    B --> C[Docker backend on home server]
     C --> D[Google Meet join]
-    D --> E[Local recording]
+    D --> E[Local recording on Mac mini]
     E --> F[FFmpeg WAV]
     F --> G[Audio cleanup + silence trim]
     G --> H[MLX Whisper]
@@ -50,6 +54,19 @@ flowchart LR
     H --> J[Markdown protocol]
     I --> J
 ```
+
+## Remote dispatch: the main feature
+
+The recorder does not have to run on the computer where the meeting starts.
+
+You can start a Meet on a laptop, copy the link, and dispatch the bot running on your Mac mini:
+
+```bash
+ssh mac-mini.local \
+  'cd ~/sprut-meetingbot-pipeline && ./scripts/meetingbot_recording_start.sh "https://meet.google.com/xxx-yyyy-zzz" 2h'
+```
+
+The same local command can be called by your own Telegram bot, webhook, Home Assistant automation, or private agent. See `docs/REMOTE_DISPATCH.md`.
 
 ## Quick start
 
@@ -131,7 +148,7 @@ runtime/meetings/
 
 ## Google Meet access requirements
 
-The bot is just another meeting participant.
+The bot is just another meeting participant. It needs a valid Meet link and normal permission to enter.
 
 You need one of these setups:
 
@@ -143,6 +160,23 @@ You need one of these setups:
 The bot cannot bypass restricted meetings, organization policies, or lobby admission.
 
 If the bot is waiting in lobby, it is not recording yet.
+
+Detailed access setup: `docs/GOOGLE_MEET_ACCESS.md`.
+
+## Final Markdown output
+
+The final artifact is not a raw transcript dump. It is a protocol with:
+
+- metadata and quality note;
+- short summary;
+- decisions;
+- tasks with owners/deadlines when known;
+- open questions;
+- AI next-step recommendation;
+- risks and quality caveats;
+- timestamped transcript at the end.
+
+See `docs/OUTPUT_MARKDOWN.md`.
 
 ## Quality model
 
@@ -178,10 +212,15 @@ Recommended future upgrade:
 
 ## Repository contents
 
-- `backend/` — Dockerized TypeScript/Playwright meeting backend, derived from ScreenApp meeting-bot.
+- `backend/` — Dockerized TypeScript/Playwright browser meeting backend component.
 - `scripts/` — local dispatch, monitor, transcription, diarization, validation scripts.
 - `config/meetingbot.env.example` — safe local config template.
-- `docs/` — setup, architecture, quality gates, troubleshooting.
+- `docs/REMOTE_DISPATCH.md` — send link from any device, record on the home server.
+- `docs/END_TO_END_FLOW.md` — full chain from Meet link to Markdown.
+- `docs/GOOGLE_MEET_ACCESS.md` — Google authorization and lobby/admission model.
+- `docs/OUTPUT_MARKDOWN.md` — transcript/protocol shape.
+- `docs/QUALITY_GATES.md` — strict/best-effort rules.
+- `docs/TROUBLESHOOTING.md` — operational debugging.
 - `runtime/` — generated locally, ignored by git.
 
 ## Canonical source
@@ -193,7 +232,9 @@ If you found this project mirrored, repackaged, or redistributed elsewhere, chec
 
 ## Attribution
 
-The browser meeting backend is derived from the MIT-licensed ScreenApp meeting-bot project: https://github.com/screenappai/meeting-bot
+The browser automation backend component includes code derived from the MIT-licensed ScreenApp meeting-bot project: https://github.com/screenappai/meeting-bot
+
+The local dispatch/orchestration scripts, ASR/diarization pipeline, quality gates, docs, and Mac mini remote-dispatch product packaging are Sprut_AI additions.
 
 Where permitted by the applicable license, if you reuse, fork, modify, package, or publish this work, keep the original copyright and license notice and link back to the canonical repository.
 
