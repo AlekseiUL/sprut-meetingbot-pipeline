@@ -243,6 +243,126 @@ The local dispatch/orchestration scripts, ASR/diarization pipeline, quality gate
 
 Where permitted by the applicable license, if you reuse, fork, modify, package, or publish this work, keep the original copyright and license notice and link back to the canonical repository.
 
+## Public links
+
+- YouTube: https://youtube.com/@alekseiulianov
+- Telegram channel — Sprut AI: https://t.me/Sprut_AI
+- Telegram chat — Sprut AI: https://t.me/+eH-qNIDmud8zNDZi
+- AI Операционка: https://t.me/tribute/app?startapp=sJyg
+
 ## License
 
 MIT. See `LICENSE` and `NOTICE.md`.
+
+---
+
+# Русская версия
+
+Sprut MeetingBot Pipeline — это локальный recording-first пайплайн для Google Meet: вы отправляете ссылку на встречу, а ваш домашний Mac mini / always-on сервер сам запускает бота, входит в Meet, пишет запись локально, расшифровывает аудио, разделяет говорящих и собирает итоговый Markdown-протокол.
+
+Главная идея: **Meet можно начать или получить на любом устройстве, а запись и обработка идут на вашем локальном Mac mini.** Ноутбук, телефон или рабочий компьютер не обязаны держать весь пайплайн на себе.
+
+Это не hosted SaaS и не обход ограничений Google Meet. Бот входит как обычный участник встречи.
+
+## Что делает проект
+
+- принимает Google Meet ссылку из команды, SSH, webhook, Telegram-бота или другого приватного контроллера;
+- запускает MeetingBot job на always-on хосте;
+- открывает Google Meet через Dockerized Playwright/Chromium backend;
+- пишет локальную запись встречи;
+- конвертирует WebM в WAV через FFmpeg;
+- чистит аудио и обрезает длинную тишину в хвосте;
+- транскрибирует речь через локальный MLX Whisper;
+- делает diarization через `pyannote.audio`;
+- собирает итоговый Markdown: summary, решения, задачи, открытые вопросы, риски, AI-подсказку и transcript.
+
+## Для кого это
+
+Подходит, если вам нужен:
+
+- локальный контроль над записями и transcript-файлами;
+- домашний сервер / Mac mini, который можно дернуть с любого устройства;
+- hackable Google Meet automation;
+- Apple Silicon / Mac mini deployment;
+- Whisper + pyannote без отправки аудио в hosted transcription API.
+
+Не подходит, если вам нужен готовый SaaS “в два клика”, если вы не имеете права записывать встречу, или если Meet закрыт политиками организации и бот не может быть приглашён/допущен.
+
+## Главная фишка: remote dispatch
+
+Компьютер, где начался Meet, и компьютер, который записывает встречу, могут быть разными.
+
+Пример:
+
+```bash
+ssh mac-mini.local \
+  'cd ~/sprut-meetingbot-pipeline && ./scripts/meetingbot_recording_start.sh "https://meet.google.com/xxx-yyyy-zzz" 2h'
+```
+
+Ту же команду может вызвать Telegram-бот, webhook, Home Assistant или приватный агент. Смысл один: **кинули ссылку — домашний Mac mini сделал всю грязную работу локально**.
+
+## Почему нужна авторизация Google / доступ к Meet
+
+Бот не взламывает Meet и не обходит lobby.
+
+Нужен один из нормальных вариантов доступа:
+
+- Meet разрешает гостей, и host допускает `MeetingBot`;
+- встреча открыта для всех по ссылке;
+- dedicated Google bot account приглашён в календарь/Meet;
+- dedicated browser profile уже авторизован локально на Mac mini.
+
+Если бот стоит в lobby, запись ещё не идёт.
+
+## Что получается на выходе
+
+Финальный Markdown — это не голый transcript. В нормальном результате есть:
+
+- metadata и quality note;
+- краткое summary;
+- решения;
+- задачи с owner/deadline, если они понятны из встречи;
+- открытые вопросы;
+- AI next-step recommendation;
+- риски и caveats качества;
+- timestamped transcript в конце.
+
+## Модель качества
+
+`HTTP 202` и `/isbusy=1` не доказывают, что запись реально пошла. Это только значит, что backend принял job.
+
+Хороший результат требует цепочку:
+
+1. бот реально вошёл в Meet;
+2. recording-файл появился и растёт;
+3. после встречи запись стабилизировалась;
+4. FFmpeg сделал WAV;
+5. Whisper дал текст;
+6. pyannote дал speaker clusters;
+7. Markdown собран с честной маркировкой strict/best-effort.
+
+Важно: Google Meet participant names и diarization — разные вещи. Имя на плитке не доказывает, что конкретный аудио-кластер принадлежит этому человеку. Для уверенной связки нужен active-speaker evidence по таймкодам.
+
+## Авторские ссылки
+
+- YouTube: https://youtube.com/@alekseiulianov
+- Telegram-канал Sprut AI: https://t.me/Sprut_AI
+- Чат Telegram-канала Sprut AI: https://t.me/+eH-qNIDmud8zNDZi
+- AI Операционка: https://t.me/tribute/app?startapp=sJyg
+
+## Канонический источник
+
+Проект поддерживается Aleksei Ulianov / Sprut_AI.
+Оригинальный репозиторий: https://github.com/AlekseiUL/sprut-meetingbot-pipeline
+
+Если вы нашли этот проект в зеркале, перепаковке или другой публикации, проверяйте этот репозиторий как источник правды.
+
+## Атрибуция
+
+Backend-компонент браузерной автоматизации включает код, производный от MIT-licensed ScreenApp meeting-bot: https://github.com/screenappai/meeting-bot
+
+Локальный remote-dispatch, orchestration scripts, ASR/diarization pipeline, quality gates, документация и Mac mini product packaging — additions от Sprut_AI.
+
+## Лицензия
+
+MIT. См. `LICENSE` и `NOTICE.md`.
