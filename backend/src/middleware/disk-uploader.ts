@@ -9,6 +9,7 @@ import {
 import { ContentType, extensionToContentType, FileType } from '../types';
 import fs, { createWriteStream } from 'fs';
 import path from 'path';
+import { recordingFolder, recordingFile, assertNoSymlinks } from '../security/paths';
 import { LogAggregator } from '../util/logger';
 import config from '../config';
 import { getStorageProvider } from '../uploader/providers/factory';
@@ -222,7 +223,8 @@ class DiskUploader implements IUploader {
 
     return new Promise((resolve, reject) => {
       const stream = createWriteStream(filePath, {
-        flags: 'a',
+        fd: fs.openSync(filePath, fs.constants.O_WRONLY | fs.constants.O_APPEND | fs.constants.O_CREAT | fs.constants.O_NOFOLLOW, 0o600),
+        autoClose: true,
         highWaterMark: 2 * 1024 * 1024,
       });
       const canWrite = stream.write(chunk);
@@ -313,15 +315,11 @@ class DiskUploader implements IUploader {
   }
 
   private static getFolderPath(userId: string) {
-    const folderPath = path.join(tempFolder, userId);
-    return folderPath;
+    return recordingFolder(tempFolder, userId);
   }
 
   private static getFilePath(userId: string, tempFileId: string, fileExtension: string) {
-    const fileName = `${tempFileId}${fileExtension}`;
-    const folderPath = DiskUploader.getFolderPath(userId);
-    const filePath = path.join(folderPath, fileName);
-    return filePath;
+    return recordingFile(tempFolder, userId, tempFileId, fileExtension);
   }
 
   private async processRecordingUpload() {
@@ -392,9 +390,11 @@ class DiskUploader implements IUploader {
 
   private static async setupDirectory(folderPath: string, userId: string, logger: Logger) {
     try {
+      assertNoSymlinks(folderPath);
       if (!fs.existsSync(folderPath)) {
         logger.info('Temp Directory does not exist. Creating...', userId);
-        await fs.promises.mkdir(folderPath, { recursive: true });
+        await fs.promises.mkdir(folderPath, { recursive: true, mode: 0o700 });
+        assertNoSymlinks(folderPath);
         logger.info('Temp Directory does not exist. Creation success...', userId);
       }
       else {

@@ -23,11 +23,11 @@ function attachBrowserErrorHandlers(browser: Browser, context: BrowserContext, p
   });
 
   page.on('crash', (page) => {
-    console.error(`${log} Page has crashed! ${page?.url()}`);
+    console.error(`${log} Page has crashed!`);
   });
 
   page.on('close', (page) => {
-    console.log(`${log} Page has closed! ${page?.url()}`);
+    console.log(`${log} Page has closed!`);
   });
 }
 

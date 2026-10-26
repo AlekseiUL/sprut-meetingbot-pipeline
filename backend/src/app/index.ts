@@ -1,4 +1,5 @@
 import express from 'express';
+import { authorizeDispatch, validateJoin } from '../security/dispatch';
 import client from 'prom-client';
 import config, { NODE_ENV } from '../config';
 import mainDebug from '../test/debug';
@@ -10,7 +11,8 @@ import { RedisConsumerService } from '../connect/RedisConsumerService';
 
 const app = express();
 
-app.use(express.json());
+app.use(authorizeDispatch);
+app.use(express.json({ limit: '16kb' }));
 
 // Initialize Redis consumer service
 export const redisConsumerService = new RedisConsumerService();
@@ -65,9 +67,9 @@ app.get('/debug', async (req, res, next) => {
   res.status(200).send({});
 });
 
-app.use('/google', googleRouter);
-app.use('/microsoft', microsoftRouter);
-app.use('/zoom', zoomRouter);
+app.use('/google', validateJoin, googleRouter);
+app.use('/microsoft', validateJoin, microsoftRouter);
+app.use('/zoom', validateJoin, zoomRouter);
 
 export const setGracefulShutdown = (val: number) =>
   gracefulShutdown = val;

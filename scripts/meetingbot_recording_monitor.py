@@ -10,6 +10,7 @@ import shutil
 import sys
 import time
 import urllib.request
+from meetingbot_http import dispatch_request, open_dispatch
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -70,7 +71,7 @@ def _send(deliver_to: str, subject: str, body: str) -> dict[str, Any]:
 
 def _backend_busy(backend_url: str) -> bool:
     try:
-        with urllib.request.urlopen(f"{backend_url.rstrip('/')}/isbusy", timeout=4) as resp:
+        with open_dispatch(dispatch_request(f"{backend_url.rstrip('/')}/isbusy"), timeout=4) as resp:
             payload = json.loads(resp.read().decode("utf-8", errors="replace") or "{}")
             return bool((payload.get("data") or 0) == 1)
     except Exception:

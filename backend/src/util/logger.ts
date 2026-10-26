@@ -1,6 +1,7 @@
 import { ConsoleMessage } from 'playwright';
 import { createLogger, format, transports, Logger } from 'winston';
 import { v5 as uuidv5, v4 } from 'uuid';
+import { redact } from '../security/redact';
 
 const NAMESPACE = uuidv5.DNS; 
 
@@ -16,9 +17,9 @@ export function loggerFactory(correlationId: string, botType?: string): Logger {
         return info;
       })(),
       format.printf(({ timestamp, level, message, correlationId, botType, ...meta }) => {
-        const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
+        const metaStr = Object.keys(meta).length ? JSON.stringify(redact(meta)) : '';
         const botTypeStr = botType ? ` [botType: ${botType}]` : '';
-        return `[${timestamp}] [${level}] [correlationId: ${correlationId}]${botTypeStr} ${message} ${metaStr}`;
+        return `[${timestamp}] [${level}] [correlationId: ${correlationId}]${botTypeStr} ${redact(message)} ${metaStr}`;
       }),
     ),
     transports: [new transports.Console()],
@@ -26,29 +27,8 @@ export function loggerFactory(correlationId: string, botType?: string): Logger {
 }
 
 export const browserLogCaptureCallback = async (logger: Logger, msg: ConsoleMessage) => {
-  try {
-    const values: unknown[] = [];
-    for (const arg of msg?.args()) {
-      values.push(await arg?.jsonValue());
-    }
-    switch (msg?.type()) {
-      case 'error':
-        logger.error(`[Playwright chrome logger] ${msg.text()}`, ...values);
-        break;
-      case 'warning':
-        logger.warn(`[Playwright chrome logger] ${msg.text()}`, ...values);
-        break;
-      case 'info':
-      case 'log':
-        logger.info(`[Playwright chrome logger] ${msg.text()}`, ...values);
-        break;
-      default:
-        logger.info(`[Playwright chrome logger] ${msg.text()}`, ...values);
-        break;
-    }
-  } catch(err) {
-    logger.info('Failed to log browser messages...', err?.message);
-  }
+  // Browser messages may contain meeting content and credentials. Record type only.
+  logger.info('Browser console event (content omitted)', { type: msg.type() });
 };
 
 export const createCorrelationId = ({
@@ -68,28 +48,12 @@ export const createCorrelationId = ({
     const entityId = botId ?? eventId;
     const name = `${userId}:${entityId}:${url}`;
     const id = uuidv5(name, NAMESPACE);
-    console.log(`[correlationId:${id}]`, {
-      correlationId: id,
-      userId,
-      eventId,
-      botId,
-      url,
-      teamId,
-      method: 'v5'
-    });
+    console.log(`[correlationId:${id}]`);
     return id;
   } catch(err) {
-    console.error('Unable to create deterministic correlationId', { userId, teamId, err });
+    console.error('Unable to create deterministic correlationId');
     const id = v4();
-    console.log(`[correlationId:${id}]`, {
-      correlationId: id,
-      userId,
-      eventId,
-      botId,
-      url,
-      teamId,
-      method: 'v4'
-    });
+    console.log(`[correlationId:${id}]`);
     return id;
   }
 };
