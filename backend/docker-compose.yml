@@ -12,8 +12,9 @@ services:
       - NOTIFY_WEBHOOK_ENABLED=false
       - NOTIFY_REDIS_ENABLED=false
       - MEETING_PARTICIPANT_INACTIVITY_ENABLED=false
+      - MEETINGBOT_DISPATCH_TOKEN=${MEETINGBOT_DISPATCH_TOKEN:?Set a separate dispatch token (at least 32 characters)}
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     volumes:
       - .:/usr/src/app
       - ./assets/screenshots:/usr/src/app/assets/screenshots

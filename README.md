@@ -1,5 +1,7 @@
 # Sprut MeetingBot Pipeline
 
+> Experimental public source, not a supported production service. No recording service is started by the offline security tests. Review [security and dependency changes](docs/security-remediation.md) before using any quick-start command below. Dispatch now requires a separately configured `MEETINGBOT_DISPATCH_TOKEN` of at least 32 characters on both server and client; this is NOT the body `bearerToken`. Keep it in the operator's environment, never in a URL or chat. Compose publishes only `127.0.0.1:3001`; use an authenticated SSH tunnel for remote access, not an exposed Docker port. No live deployment is certified by this patch.
+
 Local, recording-first Google Meet automation for self-hosted meeting transcripts: remote Meet-link dispatch, browser join, local recording, FFmpeg cleanup, MLX Whisper transcription, pyannote diarization, and quality-gated Markdown output.
 
 The key idea: **send a Google Meet link from any device, and let your always-on home machine record and process it.** Start the meeting on a work laptop, phone, or another computer; the recording can still happen on your Mac mini at home.

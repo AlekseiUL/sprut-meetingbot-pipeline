@@ -11,6 +11,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from meetingbot_http import dispatch_request, open_dispatch
 from datetime import datetime
 from pathlib import Path
 
@@ -53,9 +54,9 @@ def _http_json(method: str, url: str, payload: dict | None = None, timeout: int 
     if payload is not None:
         data = json.dumps(payload).encode("utf-8")
         headers["Content-Type"] = "application/json"
-    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    req = dispatch_request(url, data=data, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with open_dispatch(req, timeout=timeout) as resp:
             raw = resp.read().decode("utf-8", errors="replace")
             try:
                 return resp.status, json.loads(raw or "{}")
@@ -150,6 +151,12 @@ def main() -> int:
         return 2
 
     backend_url = args.backend_url.rstrip("/")
+    # Validate authorization and transport before creating a job or auto-starting anything.
+    try:
+        dispatch_request(backend_url + '/health')
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     now = datetime.now().strftime("%Y%m%d-%H%M%S")
     job_id = f"recording-{now}-{_meeting_id(url)}"
     job_dir = JOBS_DIR / job_id
