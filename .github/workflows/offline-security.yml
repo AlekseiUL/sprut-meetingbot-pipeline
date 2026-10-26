@@ -18,6 +18,6 @@ jobs:
       - run: npm run build && node -r ts-node/register --test tests/*.cjs
         working-directory: backend
       - run: python -m unittest discover -s tests -v
-      # Advisory triage is separate from unit tests; never silently ignore npm audit status.
-      - run: npm audit --omit=dev --audit-level=high
+      # Every production advisory now fails the gate; no severity exemption.
+      - run: npm audit --omit=dev --audit-level=low
         working-directory: backend
