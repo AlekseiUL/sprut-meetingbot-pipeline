@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
-  echo "This helper targets macOS. For Linux, install Docker, ffmpeg, Node 20+, and Python 3.11 manually." >&2
+  echo "This helper targets macOS. For Linux, install Docker, ffmpeg, Node 24 LTS, and Python 3.11 manually." >&2
   exit 2
 fi
 
@@ -11,7 +11,9 @@ if ! command -v brew >/dev/null 2>&1; then
   exit 2
 fi
 
-brew install ffmpeg python@3.11 node git || true
+brew install ffmpeg python@3.11 node@24 git || true
+export PATH="$(brew --prefix node@24)/bin:$PATH"
+node -e 'if (Number(process.versions.node.split(".")[0]) !== 24) process.exit(1)'
 brew install --cask docker google-chrome || true
 
 python3.11 -m venv "$HOME/.sprut-meetingbot/whisper-env"
