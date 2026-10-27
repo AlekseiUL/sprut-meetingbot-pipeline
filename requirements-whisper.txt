@@ -3,4 +3,6 @@
 mlx-whisper
 pyannote.audio
 huggingface_hub
-torch
+torch>=2.13.0
+mlx>=0.29.4
+setuptools>=84.1.0

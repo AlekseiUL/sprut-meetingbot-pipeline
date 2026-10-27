@@ -1,4 +1,4 @@
-FROM node:20
+FROM node:24-bookworm
 
 WORKDIR /usr/src/app
 
@@ -50,12 +50,11 @@ RUN if [ "$(dpkg --print-architecture)" = "arm64" ]; then ln -sf /usr/bin/chromi
 RUN mkdir -p /etc/opt/chrome/policies/managed
 COPY auto_launch_protocols.json /etc/opt/chrome/policies/managed/auto_launch_protocols.json
 
-# Install global tools
-RUN npm install -g nodemon
+# Development tools are installed from package-lock.json below.
 
 # Install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Install Playwright and its dependencies
 RUN npx playwright install --with-deps

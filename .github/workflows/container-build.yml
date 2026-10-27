@@ -1,0 +1,20 @@
+name: Container build
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  container-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [development, production]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Build only; never start the recording service
+        run: docker build --progress=plain --file backend/Dockerfile.${{ matrix.variant }} --tag meetingbot-offline:${{ matrix.variant }} backend
