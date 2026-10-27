@@ -1,4 +1,4 @@
-FROM node:20
+FROM node:24-bookworm
 
 WORKDIR /usr/src/app
 
@@ -51,11 +51,11 @@ RUN mkdir -p /etc/opt/chrome/policies/managed
 COPY auto_launch_protocols.json /etc/opt/chrome/policies/managed/auto_launch_protocols.json
 
 # Install global tools
-RUN npm install -g nodemon
+RUN npm install -g nodemon@3.1.4
 
 # Install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Install Playwright and its dependencies
 RUN npx playwright install --with-deps
