@@ -54,6 +54,7 @@ COPY auto_launch_protocols.json /etc/opt/chrome/policies/managed/auto_launch_pro
 
 # Install dependencies
 COPY package*.json ./
+COPY vendor/ ./vendor/
 RUN npm ci
 
 # Install Playwright and its dependencies

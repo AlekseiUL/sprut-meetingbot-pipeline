@@ -1,0 +1,10 @@
+{
+  "name": "@sprut/deepmerge-hardened",
+  "version": "4.3.1-sprut.1",
+  "private": true,
+  "description": "Vendored deepmerge 4.3.1 with prototype-control key filtering on both merge paths",
+  "main": "index.cjs",
+  "license": "MIT",
+  "files": ["index.cjs", "LICENSE", "README.md"],
+  "engines": { "node": ">=24 <25" }
+}
