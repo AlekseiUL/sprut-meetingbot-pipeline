@@ -68,6 +68,7 @@ jobs:
         working-directory: backend
         run: |
           npm ci
+          npm run lint
           npm run build
 
       - name: Private path / secret placeholder scan

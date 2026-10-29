@@ -9,7 +9,8 @@
     "dev": "sh -c 'if command -v docker-compose >/dev/null 2>&1; then docker-compose up --build; else docker compose up --build; fi'",
     "stop": "sh -c 'if command -v docker-compose >/dev/null 2>&1; then docker-compose down; else docker compose down; fi'",
     "build": "tsc",
-    "lint": "eslint \"*/**/*.{js,ts}\" --quiet --fix"
+    "lint": "eslint \"*/**/*.{js,ts}\"",
+    "lint:fix": "npm run lint -- --fix"
   },
   "keywords": [
     "google-meet",
@@ -27,9 +28,9 @@
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.1.0",
     "@types/ws": "^8.5.13",
-    "@typescript-eslint/eslint-plugin": "^5.55.0",
-    "@typescript-eslint/parser": "^8.72.0",
-    "eslint": "^8.36.0",
+    "@typescript-eslint/eslint-plugin": "8.72.0",
+    "@typescript-eslint/parser": "8.72.0",
+    "eslint": "8.57.1",
     "nodemon": "^3.1.4",
     "typescript": "5.9.3"
   },
