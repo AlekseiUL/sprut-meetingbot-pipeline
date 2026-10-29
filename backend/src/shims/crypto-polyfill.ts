@@ -28,7 +28,7 @@ try {
       g.crypto.randomUUID = rnd.bind(nodeCrypto);
     } else {
       // Final fallback to uuid v4 if Node's randomUUID is not present
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { v4: uuidv4 } = require('uuid');
       g.crypto = g.crypto || {};
       g.crypto.randomUUID = uuidv4;

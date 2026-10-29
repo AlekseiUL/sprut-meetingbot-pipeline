@@ -59,6 +59,7 @@ COPY --chown=nodejs:nodejs auto_launch_protocols.json /etc/opt/chrome/policies/m
     
 # Copy package files
 COPY package*.json ./
+COPY vendor/ ./vendor/
 
 # Install all dependencies (including dev dependencies for build)
 RUN npm ci && npm cache clean --force
