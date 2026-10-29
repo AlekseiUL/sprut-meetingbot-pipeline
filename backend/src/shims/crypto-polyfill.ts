@@ -3,7 +3,7 @@
  * which some Azure SDK internals expect (globalThis.crypto and crypto.randomUUID).
  *
  * This shim is a no-op on Node 20+ where global Web Crypto is available by default.
- * We're using Node 20, so this polyfill mainly serves as a safety fallback.
+ * We're using Node 24 LTS, so this polyfill mainly serves as a safety fallback.
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
