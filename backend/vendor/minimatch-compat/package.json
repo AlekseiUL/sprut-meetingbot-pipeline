@@ -1,0 +1,11 @@
+{
+  "name": "@sprut/minimatch-compat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Legacy callable minimatch API adapter backed by upstream minimatch 11",
+  "main": "index.cjs",
+  "license": "MIT",
+  "files": ["index.cjs", "README.md"],
+  "dependencies": { "minimatch-engine": "npm:minimatch@11.0.4" },
+  "engines": { "node": ">=24 <25" }
+}

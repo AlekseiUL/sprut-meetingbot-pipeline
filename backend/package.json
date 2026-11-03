@@ -36,6 +36,9 @@
   },
   "overrides": {
     "deepmerge": "$deepmerge",
+    "minimatch@^3.0.0": "$minimatch",
+    "@typescript-eslint/typescript-estree@8.72.0": { "minimatch": "11.0.4" },
+    "nodemon@^3.1.4": { "minimatch": "11.0.4" },
     "@azure/msal-node": {
       "uuid": "11.1.1"
     }
@@ -51,6 +54,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "fs-extra": "^11.2.0",
+    "minimatch": "file:./vendor/minimatch-compat",
     "moment": "^2.30.1",
     "moment-timezone": "^0.5.46",
     "playwright": "^1.45.3",

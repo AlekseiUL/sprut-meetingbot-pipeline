@@ -9,3 +9,10 @@ Regenerate the snapshot when a dependency manifest changes. Review the diff, run
 The ASR snapshot targets Apple Silicon/macOS 14+ and Python 3.12; newer patched torch wheels require macOS 14+. ASR/model downloads and live recording are not part of this gate. Node is 24 LTS in CI and both Debian bookworm Dockerfiles. Container builds require an available Docker builder; source tests alone do not prove container viability.
 
 The npm lockfile is audited for production and development at `--audit-level=low`: all known advisories block CI. The existing production-only MeetingBot gate is not weakened. Node 24 LTS is the tested runtime.
+
+Minimatch maintenance: the legacy 3.x consumers use the repository-owned
+[callable API adapter](../backend/vendor/minimatch-compat/README.md), backed by
+unmodified upstream minimatch 11.0.4. The two reviewed 10.x consumers have
+separate parent-scoped 11.0.4 overrides. This is an explicit compatibility
+migration, not an advisory exemption. Keep `tests/minimatch-compat.cjs`, both
+npm audit gates and clean-install resolution checks when updating these chains.
