@@ -16,3 +16,7 @@ unmodified upstream minimatch 11.0.4. The two reviewed 10.x consumers have
 separate parent-scoped 11.0.4 overrides. This is an explicit compatibility
 migration, not an advisory exemption. Keep `tests/minimatch-compat.cjs`, both
 npm audit gates and clean-install resolution checks when updating these chains.
+
+OpenTelemetry API 1.45.2 fixes GHSA-mf5v-w3w3-f6cg (trace-context parsing denial of service). Keep the SDK, OTLP exporters and proto packages aligned at 1.45.2 with their exact 0.66b2 companion dependencies. Bumping the API alone conflicts with the SDK's exact dependency. Validate resolution on the documented macOS/Python target and run a fresh advisory scan. Updating this snapshot does not deploy services or attest existing ASR installations.
+
+The npm lockfile uses fast-xml-parser 5.12.1 (patched floor 5.12.0) for GHSA-474x-hrwr-fgx4. This remains within both parent packages' existing 5.x ranges; only its required fast-xml-builder/is-unsafe companions changed. Do not suppress the production or all-dependency audit gates.
