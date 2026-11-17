@@ -20,7 +20,7 @@ fsspec==2026.9.0
 googleapis-common-protos==1.76.0
 grpcio==1.85.0
 h11==0.16.0
-hf-xet==1.7.0
+hf-xet==1.8.0
 httpcore2==2.16.0
 httpx2==2.16.0
 huggingface-hub==2.3.0
